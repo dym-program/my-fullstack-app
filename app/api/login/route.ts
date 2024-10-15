@@ -1,29 +1,40 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import dbConnect from '@/lib/mongodb';
-import User from '@/models/User';
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+import redis from '@/lib/redis';
+import User from '@/models/User';
+import dbConnect from '@/lib/mongodb';
 
-export async function POST(request: Request) {
-  const { email, password } = await request.json();
+export async function POST(req: Request) {
+  const { email, password } = await req.json();
 
+  // 首先连接数据库
   await dbConnect();
 
-  // 查找用户
+  // 查询数据库验证用户
   const user = await User.findOne({ email });
-  if (!user) {
-    return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
+  
+  if (!user || !(bcrypt.compare(password, user.password))) {
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  // 验证密码
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
-  }
+  // 如果验证成功，生成 JWT token
+  const token = jwt.sign(
+    { userId: user._id, email: user.email }, 
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: '1h' }
+  );
 
-  // 生成 JWT
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+  // 将会话信息存储到 Redis 中，1小时过期
+  await redis.set(
+    `session-${user._id}`, 
+    JSON.stringify({ token, userId: user._id }), 
+    'EX', 
+    3600
+  );
 
-  // 返回 JWT
-  return NextResponse.json({ token });
+  // 设置 cookies 返回给客户端
+  const response = NextResponse.json({ message: 'Login successful',token });
+  response.cookies.set('token', token, {maxAge: 3600 });
+  return response;
 }
