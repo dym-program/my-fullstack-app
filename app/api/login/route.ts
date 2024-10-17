@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import redis from '@/lib/redis';
 import User from '@/models/User';
-import dbConnect from '@/lib/mongodb';
+import  mongooseConnect  from '@/lib/mongodb';
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
   // 首先连接数据库
-  await dbConnect();
+  await mongooseConnect();
 
   // 查询数据库验证用户
   const user = await User.findOne({ email });

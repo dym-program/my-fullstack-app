@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { signIn } from 'next-auth/react';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,7 +39,10 @@ export default function LoginPage() {
         <label>Password:</label>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button type="submit">Login</button>
+        
       </form>
+
+      <button onClick={() => signIn('github')}>Login with GitHub</button>
     </div>
   );
 }

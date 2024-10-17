@@ -10,6 +10,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  githubNickname: {
+    type: String,
+  },
+  githubAvatar: {
+    type: String,
+  }
 });
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
