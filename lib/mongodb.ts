@@ -34,23 +34,27 @@ if (!cachedMongoClient) {
 // Mongoose 连接函数
 export async function mongooseConnect() {
   if (cachedMongoose.conn) {
+    console.log("????")
     return cachedMongoose.conn;
   }
-
+  console.log('start MongoDB URI:', process.env.MONGODB_URI);
   if (!cachedMongoose.promise) {
     const opts = {
       bufferCommands: false,
       useNewUrlParser: true,
-      useUnifiedTopology: true,
+      useUnifiedTopology: true, // 添加这两个选项
+      serverSelectionTimeoutMS: 15000, // 增加超时时间
     };
 
-    cachedMongoose.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log('Mongoose connected successfully!');
-      return mongooseInstance.connection;
-    }).catch((err) => {
-      console.error('Mongoose connection error:', err);
-      throw new Error('Mongoose connection failed');
-    });
+    cachedMongoose.promise = mongoose.connect(MONGODB_URI, opts)
+      .then((mongooseInstance) => {
+        console.log('Mongoose connected successfully!');
+        return mongooseInstance.connection;
+      })
+      .catch((err) => {
+        console.error('Mongoose connection error:', err.message);
+        throw new Error('Mongoose connection failed');
+      });
   }
 
   cachedMongoose.conn = await cachedMongoose.promise;

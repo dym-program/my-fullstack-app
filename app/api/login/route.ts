@@ -4,10 +4,8 @@ import jwt from 'jsonwebtoken';
 import redis from '@/lib/redis';
 import User from '@/models/User';
 import  mongooseConnect  from '@/lib/mongodb';
-
 export async function POST(req: Request) {
   const { email, password } = await req.json();
-
   // 首先连接数据库
   await mongooseConnect();
 
